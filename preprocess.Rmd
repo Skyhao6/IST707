@@ -1,0 +1,75 @@
+---
+title: "707Final"
+---
+```{r}
+dat.dir <- "D:\\Homework\\SU\\IST707\\final\\Train.csv"
+data <- read.csv(dat.dir, header = TRUE)
+
+```
+
+
+```{r}
+library(imputeTS)
+sum(is.na(data))
+
+data$total_female <- round(na_interpolation(data$total_female))
+data$total_male <- round(na_interpolation(data$total_male))
+data$total_people <- data$total_male + data$total_female
+
+data$most_impressing <- ifelse(data$most_impressing == "", 
+                               "Blank", data$most_impressing)
+data$travel_with <- ifelse(data$travel_with == "", 
+                           "Blank", data$travel_with)
+
+```
+
+```{r}
+library(tidyverse)
+data$country_new <- data$country
+data <- data %>%
+  mutate(country_new = recode(country_new, 
+                              "ALGERIA" = "O-NAME", "IRAN" = "O-NAME", "YEMEN" = "O-NAME", "COMORO" = "O-NAME", "LEBANON" = "O-NAME", "SUDAN" = "O-NAME", "DJIBOUT" = "O-NAME", "TUNISIA" = "O-NAME", "MORROCO" = "O-NAME", "IRAQ" = "O-NAME",
+                              "BURGARIA" = "O-EEU", "CROATIA" = "O-EEU", "HUNGARY" = "O-EEU", "LATVIA" = "O-EEU", "ROMANIA" = "O-EEU", "SLOVAKIA" = "O-EEU", "UKRAIN" = "O-EEU", "ESTONIA" = "O-EEU", "LITHUANIA" = "O-EEU", "GEORGIA" = "O-EEU", "SLOVENIA" = "O-EEU", "MONTENEGRO" = "O-EEU",
+                              "GHANA" = "O-AF", "NIGERIA" = "O-AF", "NAMIBIA" = "O-AF", "SWAZILAND" = "O-AF", "ANGOLA" = "O-AF", "MAURITIUS" = "O-AF", "NIGER" = "O-AF", "MADAGASCAR" = "O-AF", "LESOTHO" = "O-AF", "IVORY COAST" = "O-AF",
+                              "NEPAL" = "O-ASIA", "PHILIPINES" = "O-ASIA", "THAILAND" = "O-ASIA", "INDONESIA" = "O-ASIA", "SRI LANKA" = "O-ASIA", "MYANMAR" = "O-ASIA",
+                              "CHILE" = "O-LAC", "MEXICO" = "O-LAC", "ARGENTINA" = "O-LAC", "CAPE VERDE" = "O-LAC", "COSTARICA" = "O-LAC", "DOMINICA" = "O-LAC", "COLOMBIA" = "O-LAC", "URUGUAY" = "O-LAC", "TRINIDAD TOBACCO" = "O-LAC",
+                              "LUXEMBOURG" = "O-HIC", "BERMUDA" = "O-HIC", "KUWAIT" = "O-HIC", "CYPRUS" = "O-HIC", "SCOTLAND" = "O-HIC", "MALT" = "O-HIC"))
+
+
+
+data$cost_category <- ifelse(data$total_cost >= 21756766, "highest",
+                             ifelse(data$total_cost >= 8114389, "high",
+                                    ifelse(data$total_cost > 812175, "normal", "low")))
+
+data <- data %>%
+  mutate(cost_category = recode(cost_category,
+                                "highest" = 4,
+                                "high" = 3,
+                                "normal" = 2,
+                                "low" = 1))
+
+
+```
+
+```{r}
+data_new <- select(data, -ID, -total_cost, -country, -most_impressing)
+str(data_new)
+data_new = data_new |> 
+  mutate_if(is.character, as.factor)
+data_new$cost_category = as.factor(data_new$cost_category)
+
+
+
+```
+
+```{r}
+library(caret)
+set.seed(707)
+trainList <- createDataPartition(y=data_new$cost_category,p=.60,list=FALSE)
+trainSet <- data_new[trainList,]
+testSet <- data_new[-trainList,]
+
+write.table(trainSet, "D:\\Homework\\SU\\IST707\\final\\trainSet.csv", row.names=FALSE,col.names=TRUE,sep=",")
+write.table(testSet, "D:\\Homework\\SU\\IST707\\final\\testSet.csv", row.names=FALSE,col.names=TRUE,sep=",")
+```
+

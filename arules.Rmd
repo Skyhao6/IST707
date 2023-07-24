@@ -1,0 +1,53 @@
+```{r}
+library(tidyverse)
+library(dplyr)
+# For Windows
+data <- read.csv("Train_18507.csv")
+str(data)
+# Drop empty rows and NA
+data = na.omit(data)
+data = data %>% filter(travel_with != '') %>% select(-Tour_ID)
+```
+
+```{r}
+str(data$cost_category)
+data = data %>%
+  mutate(cost_category = recode(cost_category,
+                                "High Cost" = "High Cost",
+                                "Higher Cost" = "High Cost",
+                                "Highest Cost" = "High Cost",
+                                "Low Cost" = "Low Cost",
+                                "Lower Cost" = "Low Cost",
+                                "Normal" = "Normal"))
+data_new = data |> 
+  mutate_all(as.factor)
+
+str(data_new)
+# Subset the data with rows that tour_arrangement is only "Package Tour"
+#data_new = data_new[which(data_new$tour_arrangement == "Package Tour"),]
+```
+
+```{r}
+library(arules)
+library(arulesViz)
+dataX = as(data_new, "transactions")
+
+
+rules1 <- apriori(dataX,
+                  parameter = list(supp = 0.65, conf = 0.8),
+                  control = list(verbose = F),
+                  appearance = list(default = "lhs", rhs = ("cost_category=High Cost")))
+rules1 <- sort(rules1,
+               by = "confidence",
+               decreasing = T)
+inspect(rules1)
+#ruleExplorer(rules1)
+
+rules2 <- apriori(dataX,
+                  parameter = list(supp = 0.85, conf = 0.8))
+rules2 <- sort(rules2,
+               by = "confidence",
+               decreasing = T)
+inspect(rules2)
+#ruleExplorer(rules2)
+```
